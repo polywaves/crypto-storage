@@ -1,6 +1,7 @@
 import io
 import uuid
 from time import time
+from unidecode import unidecode
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import Response
 from cryptography.fernet import Fernet
@@ -25,9 +26,11 @@ async def put_file(encryption_key: str, file: UploadFile = File()):
 
   ## Upload encrypted file stream to s3
   metadata = {
-    "name": file.filename.encode("utf-8"),
+    "name": unidecode(file.filename),
     "content_type": file.content_type
   }
+
+  logger.debug(metadata)
 
   s3.upload_fileobj(io.BytesIO(encrypted_stream), config["S3_BUCKET"], id, ExtraArgs={
     "Metadata": metadata
@@ -48,7 +51,7 @@ async def get_file(id: str, encryption_key: str):
   stream = file["Body"].read()
   decrypted_stream = fernet.decrypt(stream)
   
-  name = metadata["name"].decode("utf-8")
+  name = metadata["name"]
   headers = {
     "Content-Disposition": f"attachment; filename={name}"
   }
