@@ -1,5 +1,6 @@
 import io
 import uuid
+import base64
 from time import time
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import Response
@@ -25,7 +26,7 @@ async def put_file(encryption_key: str, file: UploadFile = File()):
 
   ## Upload encrypted file stream to s3
   metadata = {
-    "name": file.filename.encode("ascii"),
+    "name": base64.b64encode(file.filename).decode('utf-8'),
     "content_type": file.content_type
   }
 
@@ -48,7 +49,7 @@ async def get_file(id: str, encryption_key: str):
   stream = file["Body"].read()
   decrypted_stream = fernet.decrypt(stream)
   
-  name = metadata["name"].encode("ascii")
+  name = base64.b64decode(metadata["name"]).decode('utf-8')
   headers = {
     "Content-Disposition": f"attachment; filename={name}"
   }
