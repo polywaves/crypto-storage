@@ -5,7 +5,7 @@ from unidecode import unidecode
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import Response
 from cryptography.fernet import Fernet
-from app.config import config
+from app.config import config, get_encryption_key
 from app.providers.s3 import s3
 from app.utils.logger_util import logger
 from app.utils.response_util import response
@@ -19,7 +19,7 @@ async def put_file(file: UploadFile = File()):
   id = str(uuid.uuid4())
 
   ## Make encrypted file stream
-  fernet = Fernet(config["ENCRYPTION_KEY"])
+  fernet = Fernet(get_encryption_key())
 
   stream = await file.read()
   encrypted_stream = fernet.encrypt(stream)
@@ -42,7 +42,7 @@ async def put_file(file: UploadFile = File()):
 @router.get("/file", tags=["Get file"])
 async def get_file(id: str):
   ## Exec
-  fernet = Fernet(config["ENCRYPTION_KEY"])
+  fernet = Fernet(get_encryption_key())
 
   file = s3.get_object(Bucket=config["S3_BUCKET"], Key=id)
   metadata = file["Metadata"]
@@ -57,13 +57,13 @@ async def get_file(id: str):
   return Response(content=decrypted_stream, media_type=metadata["Content_type"], headers=headers)
 
 
-@router.get("/new_encryption_key", tags=["Get new encryption key"])
-async def new_encryption_key():
-  start_time = time()
+# @router.get("/new_encryption_key", tags=["Get new encryption key"])
+# async def new_encryption_key():
+#   start_time = time()
 
-  ## Exec
-  encryption_key = Fernet.generate_key()
+#   ## Exec
+#   encryption_key = Fernet.generate_key()
 
-  return response({
-    "encryption_key": encryption_key
-  }, start_time=start_time)
+#   return response({
+#     "encryption_key": encryption_key
+#   }, start_time=start_time)
