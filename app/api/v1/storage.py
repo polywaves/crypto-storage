@@ -14,12 +14,12 @@ router = APIRouter()
 
 
 @router.put("/file", tags=["Put file"])
-async def put_file(encryption_key: str, file: UploadFile = File()):
+async def put_file(file: UploadFile = File()):
   start_time = time()
   id = str(uuid.uuid4())
 
   ## Make encrypted file stream
-  fernet = Fernet(encryption_key)
+  fernet = Fernet(config["ENCRYPTION_KEY"])
 
   stream = await file.read()
   encrypted_stream = fernet.encrypt(stream)
@@ -40,9 +40,9 @@ async def put_file(encryption_key: str, file: UploadFile = File()):
 
 
 @router.get("/file", tags=["Get file"])
-async def get_file(id: str, encryption_key: str):
+async def get_file(id: str):
   ## Exec
-  fernet = Fernet(encryption_key)
+  fernet = Fernet(config["ENCRYPTION_KEY"])
 
   file = s3.get_object(Bucket=config["S3_BUCKET"], Key=id)
   metadata = file["Metadata"]
