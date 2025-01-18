@@ -30,8 +30,6 @@ async def put_file(encryption_key: str, file: UploadFile = File()):
     "content_type": file.content_type
   }
 
-  logger.debug(metadata)
-
   s3.upload_fileobj(io.BytesIO(encrypted_stream), config["S3_BUCKET"], id, ExtraArgs={
     "Metadata": metadata
   })
@@ -48,15 +46,15 @@ async def get_file(id: str, encryption_key: str):
 
   file = s3.get_object(Bucket=config["S3_BUCKET"], Key=id)
   metadata = file["Metadata"]
+  
   stream = file["Body"].read()
   decrypted_stream = fernet.decrypt(stream)
-  
-  name = metadata["name"]
+  name = metadata["Name"]
   headers = {
     "Content-Disposition": f"attachment; filename={name}"
   }
 
-  return Response(content=decrypted_stream, media_type=metadata["content_type"], headers=headers)
+  return Response(content=decrypted_stream, media_type=metadata["Content_type"], headers=headers)
 
 
 @router.get("/new_encryption_key", tags=["Get new encryption key"])
