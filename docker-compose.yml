@@ -1,0 +1,29 @@
+services:
+  nginx:
+    build:
+      context: ./nginx
+    env_file:
+      - .env
+    ports:
+      - 80:80
+      - 443:443
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    deploy:
+      mode: replicated
+      replicas: 10
+      restart_policy:
+        condition: on-failure
+        delay: 5s
